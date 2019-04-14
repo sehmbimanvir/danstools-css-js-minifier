@@ -21,7 +21,7 @@ var app = function () {
         var newFileName = getNewFileName(fileObj);
         var newFilePromise = fileObj.extension === 'css' ? processCSS(data) : processJS(data);
         newFilePromise.then(response => {
-            saveFile(newFileName, response);
+            saveFile(path.join(__dirname, newFileName), response);
         });
     })
 }
