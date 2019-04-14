@@ -2,26 +2,33 @@ const request = require('request'),
     cheerio = require('cheerio'),
     vkb = require('vkbeautify'),
     fs = require('fs'),
-    path = require('path');
+	chalk = require('chalk'),
+    path = require('path'),
+	log = console.log;
 
-var app = function () {
-    var file = process.argv[2];
-    var fullPath = path.join(__dirname, file)
-
-    fs.readFile(fullPath, {encoding: 'utf-8'}, (err, data) => {
+const app = function () {
+    var originalFileName = process.argv[2],
+		originalFilePull = process.cwd() + '\\' + originalFileName;
+	
+    fs.readFile(originalFilePull, {encoding: 'utf-8'}, (err, data) => {
         if (err) {
-            console.log(err.message);
+            log(chalk.red(err.message));
             return false;
         }
-        var fileObj = getFileDetails(file);
+		log(chalk.green('Processing File...'))
+		var originalFileSize = getFileSizeInKb(fs.statSync(originalFilePull).size);
+        var fileObj = getFileDetails(originalFileName);
         if (!isValidExtension(fileObj.extension)) {
-            console.log('Invalid File');
+            log(chalk.red('File Doesn\'t Supported'));
             return false;
         }
         var newFileName = getNewFileName(fileObj);
         var newFilePromise = fileObj.extension === 'css' ? processCSS(data) : processJS(data);
         newFilePromise.then(response => {
-            saveFile(newFileName, response);
+            saveFile(newFileName, response).then(output => {
+				var newFileSize = getFileSizeInKb(output.size);
+				log(chalk.green(`File Size Reduced From ${chalk.red.bold(originalFileSize + 'Kb')} To ${chalk.red.yellow(newFileSize + 'Kb')} (Saved as ${newFileName})`));
+			});
         });
     })
 }
@@ -47,7 +54,7 @@ function processJS (data) {
             }
         }, (err, response, body) => {
             if (err) {
-                console.log(err.message);
+                log(err.message);
                 return false;
             }
             var $ = cheerio.load(body);
@@ -57,11 +64,14 @@ function processJS (data) {
 }
 
 function saveFile (filename, data) {
-    fs.writeFile(process.cwd() + '\\' + filename, data, function (err) {
-        if (!err) {
-            console.log('File Saved Successfully');
-        }
-    })
+	var finalPath = process.cwd() + '\\' + filename;
+    return new Promise(resolve => {
+		fs.writeFile(filename, data, function (err) {
+			if (!err) {
+				resolve(fs.statSync(finalPath));
+			}
+		})
+	})
 }
 
 function getFileDetails (file) {
@@ -80,4 +90,12 @@ function getNewFileName (file) {
 function isValidExtension (extension) {
     var allowedExtensions = ['css', 'js'];
     return allowedExtensions.findIndex(item => item === extension) >= 0;
+}
+
+function getFileSizeInKb(size) {
+	return round(size / 1024);
+}
+
+function round(number) {
+	return Math.round(number * 100) / 100;
 }

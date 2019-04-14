@@ -13,6 +13,7 @@
   "author": "Manvir Singh",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.4.2",
     "cheerio": "^1.0.0-rc.3",
     "request": "^2.88.0",
     "vkbeautify": "^0.99.3"
