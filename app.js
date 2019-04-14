@@ -21,7 +21,7 @@ var app = function () {
         var newFileName = getNewFileName(fileObj);
         var newFilePromise = fileObj.extension === 'css' ? processCSS(data) : processJS(data);
         newFilePromise.then(response => {
-            saveFile(path.join(__dirname, newFileName), response);
+            saveFile(newFileName, response);
         });
     })
 }
@@ -57,7 +57,7 @@ function processJS (data) {
 }
 
 function saveFile (filename, data) {
-    fs.writeFile(path.join(__dirname, filename), data, function (err) {
+    fs.writeFile(process.cwd() + '\\' + filename, data, function (err) {
         if (!err) {
             console.log('File Saved Successfully');
         }
